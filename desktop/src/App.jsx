@@ -128,20 +128,37 @@ function Badge({label, col="#888", bg="#f0f0f0", sz=11}) {
 }
 
 function Gauge({score}) {
-  const pct = Math.round(score*100);
+  const pct = Math.round(Math.min(score, 0.99) * 100);
   const r = riskLevel(score);
-  const ang = -135 + pct*2.7;
+  const cx = 80; const cy = 72; const radius = 54;
+  const startDeg = 210; const sweepDeg = 120;
+  const angleDeg = startDeg + (pct / 100) * sweepDeg;
+  const angleRad = angleDeg * Math.PI / 180;
+  const needleLen = radius - 8;
+  const needleX = cx + needleLen * Math.cos(angleRad);
+  const needleY = cy + needleLen * Math.sin(angleRad);
+  const x1 = cx + radius * Math.cos(startDeg * Math.PI / 180);
+  const y1 = cy + radius * Math.sin(startDeg * Math.PI / 180);
+  const x2 = cx + radius * Math.cos(330 * Math.PI / 180);
+  const y2 = cy + radius * Math.sin(330 * Math.PI / 180);
+  const filledAngle = startDeg + (pct / 100) * sweepDeg;
+  const fx = cx + radius * Math.cos(filledAngle * Math.PI / 180);
+  const fy = cy + radius * Math.sin(filledAngle * Math.PI / 180);
+  const largeArc = (pct / 100) * sweepDeg > 180 ? 1 : 0;
   return (
     <div style={{textAlign:"center"}}>
-      <svg viewBox="0 0 160 100" width="140" style={{overflow:"visible"}}>
-        <path d="M20,90 A70,70,0,0,1,140,90" fill="none" stroke="#eee" strokeWidth="12" strokeLinecap="round"/>
-        <path d="M20,90 A70,70,0,0,1,140,90" fill="none" stroke={r.col} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${pct*2.2} 220`}/>
-        <line x1="80" y1="90" x2={80+52*Math.cos((ang-90)*Math.PI/180)} y2={90+52*Math.sin((ang-90)*Math.PI/180)} stroke="#333" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx="80" cy="90" r="5" fill="#333"/>
-        <text x="80" y="72" textAnchor="middle" fontSize="22" fontWeight="500" fill={r.col}>{pct}</text>
-        <text x="80" y="84" textAnchor="middle" fontSize="9" fill="#888">/ 100</text>
+      <svg viewBox="0 0 160 125" width="140">
+        <path d={`M${x1},${y1} A${radius},${radius},0,0,1,${x2},${y2}`}
+          fill="none" stroke="#eee" strokeWidth="12" strokeLinecap="round"/>
+        {pct > 0 && (
+          <path d={`M${x1},${y1} A${radius},${radius},0,${largeArc},1,${fx},${fy}`}
+            fill="none" stroke={r.col} strokeWidth="12" strokeLinecap="round"/>
+        )}
+        <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#333" strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={cx} cy={cy} r="5" fill="#333"/>
+        <text x={cx} y="100" textAnchor="middle" fontSize="22" fontWeight="500" fill={r.col}>{pct}</text>
+        <text x={cx} y="116" textAnchor="middle" fontSize="11" fontWeight="500" fill={r.col}>{r.text}</text>
       </svg>
-      <div style={{fontSize:11,fontWeight:500,color:r.col,marginTop:-6}}>{r.text}</div>
     </div>
   );
 }

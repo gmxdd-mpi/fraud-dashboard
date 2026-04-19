@@ -125,19 +125,50 @@ const Card = ({children,style={}})=>(
 );
 
 function ScoreRing({score}) {
-  const pct=Math.round(score*100); const r=rl(score);
-  const ang=-135+pct*2.7;
+  const pct = Math.round(Math.min(score, 0.99) * 100);
+  const r = rl(score);
+  const cx = 60; const cy = 58; const radius = 42;
+  // Arc spans from 210° to 330° (= -150° to -30° from top)
+  // That's 120° total sweep for a half-circle gauge
+  // Convert pct to angle within that range
+  const startDeg = 210; const sweepDeg = 120;
+  const angleDeg = startDeg + (pct / 100) * sweepDeg;
+  const angleRad = (angleDeg * Math.PI) / 180;
+  const needleLen = radius - 6;
+  const needleX = cx + needleLen * Math.cos(angleRad);
+  const needleY = cy + needleLen * Math.sin(angleRad);
+
+  // Arc path: from 210° to 330°
+  const x1 = cx + radius * Math.cos(startDeg * Math.PI / 180);
+  const y1 = cy + radius * Math.sin(startDeg * Math.PI / 180);
+  const x2 = cx + radius * Math.cos(330 * Math.PI / 180);
+  const y2 = cy + radius * Math.sin(330 * Math.PI / 180);
+
+  // Filled arc end point
+  const filledAngle = startDeg + (pct / 100) * sweepDeg;
+  const fx = cx + radius * Math.cos(filledAngle * Math.PI / 180);
+  const fy = cy + radius * Math.sin(filledAngle * Math.PI / 180);
+  const largeArc = (pct / 100) * sweepDeg > 180 ? 1 : 0;
+
   return (
     <div style={{textAlign:"center"}}>
-      <svg viewBox="0 0 120 80" width="110" style={{overflow:"visible"}}>
-        <path d="M15,70 A52,52,0,0,1,105,70" fill="none" stroke="#eee" strokeWidth="10" strokeLinecap="round"/>
-        <path d="M15,70 A52,52,0,0,1,105,70" fill="none" stroke={r.col} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${pct*1.64} 164`}/>
-        <line x1="60" y1="70" x2={60+40*Math.cos((ang-90)*Math.PI/180)} y2={70+40*Math.sin((ang-90)*Math.PI/180)} stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="60" cy="70" r="4" fill="#333"/>
-        <text x="60" y="56" textAnchor="middle" fontSize="18" fontWeight="500" fill={r.col}>{pct}</text>
-        <text x="60" y="67" textAnchor="middle" fontSize="8" fill="#aaa">/100</text>
+      <svg viewBox="0 0 120 105" width="110">
+        {/* background arc 210°→330° */}
+        <path d={`M${x1},${y1} A${radius},${radius},0,0,1,${x2},${y2}`}
+          fill="none" stroke="#eee" strokeWidth="8" strokeLinecap="round"/>
+        {/* filled arc 210°→current */}
+        {pct > 0 && (
+          <path d={`M${x1},${y1} A${radius},${radius},0,${largeArc},1,${fx},${fy}`}
+            fill="none" stroke={r.col} strokeWidth="8" strokeLinecap="round"/>
+        )}
+        {/* needle */}
+        <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#444" strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={cx} cy={cy} r="4" fill="#444"/>
+        {/* score below */}
+        <text x={cx} y="78" textAnchor="middle" fontSize="20" fontWeight="600" fill={r.col}>{pct}</text>
+
+        <text x={cx} y="96" textAnchor="middle" fontSize="9" fontWeight="500" fill={r.col}>{r.text}</text>
       </svg>
-      <div style={{fontSize:11,fontWeight:500,color:r.col,marginTop:-4}}>{r.text}</div>
     </div>
   );
 }
