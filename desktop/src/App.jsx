@@ -226,8 +226,8 @@ function LLMPanel({tx, score}) {
     const r = riskLevel(score);
     const prompt = `You are an AI assistant in a bank fraud detection dashboard for anti-fraud analysts.\n\nTransaction: ${tx.id} · €${tx.amount} at ${tx.merchant} (${tx.category}, ${tx.country}) · ${tx.time} · Card ${tx.cardPresent?"present":"not present"} · ${tx.intl?"International":"Domestic"} · ${tx.distanceKm}km · ${tx.velocity} txns/hr · ${tx.newMerchant?"New":"Known"} merchant · Avg spend €${tx.avgSpend}\nXGBoost score: ${Math.round(score*100)}/100 (${r.text})\n\nWrite 3 concise paragraphs: (1) overall risk and key drivers, (2) what the model detected and why, (3) recommended action. Plain language, no bullets.`;
     try {
-      const res = await fetch("/api/llm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,messages:[{role:"user",content:prompt}]})});
       const data = await res.json();
+      console.log("Response:", JSON.stringify(data));
       setText(data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"No response.");
       setDone(true);
     } catch { setError("API call failed."); }
